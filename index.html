@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Age of Agents — AI Collective @ ECPI</title>
+  <style>
+    :root {
+      --bg:       #18171C;
+      --surface:  #2A2730;
+      --surface2: #36333A;
+      --primary:  #CFB594;
+      --accent:   #803717;
+      --deep:     #5B1D09;
+      --muted:    #8E5D46;
+      --subtext:  #A08060;
+      --dim:      #5C5058;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--primary);
+      font-family: 'Georgia', serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+    #progress-bar {
+      height: 3px;
+      background: var(--accent);
+      transition: width 0.4s ease;
+      flex-shrink: 0;
+    }
+    #deck { flex: 1; position: relative; overflow: hidden; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 5rem;
+      opacity: 0;
+      transform: translateX(50px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+    }
+    .slide.active  { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    .slide.exit    { opacity: 0; transform: translateX(-50px); }
+
+    /* Typography */
+    .eyebrow {
+      font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.9rem;
+    }
+    .slide h1 {
+      font-size: clamp(2rem, 5vw, 3.8rem); font-weight: normal;
+      color: var(--primary); text-align: center; line-height: 1.2;
+    }
+    .slide h2 {
+      font-size: clamp(1.3rem, 2.8vw, 2rem); font-weight: normal;
+      color: var(--primary); text-align: center; margin-bottom: 1.5rem;
+    }
+    .rule { width: 52px; height: 2px; background: var(--accent); margin: 1.2rem auto 1.6rem; flex-shrink: 0; }
+    .meta { color: var(--subtext); font-size: 0.95rem; letter-spacing: 0.08em; text-align: center; line-height: 2; }
+    .framing {
+      max-width: 640px; text-align: center; font-size: 1.05rem;
+      color: var(--primary); line-height: 1.7; font-style: italic;
+    }
+
+    /* Question blocks */
+    .question-block {
+      background: var(--surface); border-left: 3px solid var(--accent);
+      padding: 1rem 1.5rem; max-width: 640px; width: 100%; margin-bottom: 1rem;
+      border-radius: 0 4px 4px 0;
+    }
+    .question-block p { font-size: 0.95rem; color: var(--subtext); line-height: 1.6; }
+
+    /* Timeline */
+    .timeline { display: flex; flex-direction: column; gap: 0.6rem; max-width: 680px; width: 100%; }
+    .t-row { display: grid; grid-template-columns: 1fr 28px 1fr; align-items: center; gap: 0.5rem; }
+    .t-from { text-align: right; font-size: 0.85rem; color: var(--subtext); }
+    .t-to   { font-size: 0.85rem; color: var(--primary); }
+    .t-arrow { color: var(--accent); font-size: 1rem; text-align: center; }
+    .key-shift {
+      max-width: 640px; text-align: center; font-size: 0.9rem;
+      color: var(--muted); line-height: 1.6; margin-top: 1.2rem; font-style: italic;
+    }
+
+    /* Definition box */
+    .def-box {
+      background: var(--surface); border: 1px solid var(--accent); border-radius: 6px;
+      padding: 1.25rem 2rem; max-width: 640px; text-align: center;
+      color: var(--subtext); font-size: 0.95rem; line-height: 1.7; margin-bottom: 1.5rem;
+    }
+
+    /* Pills */
+    .pill-list { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; max-width: 680px; }
+    .pill {
+      background: var(--surface2); border: 1px solid var(--muted); border-radius: 24px;
+      padding: 0.4rem 1rem; font-size: 0.82rem; color: var(--subtext); letter-spacing: 0.04em;
+    }
+    .pill.hi { border-color: var(--accent); color: var(--primary); }
+
+    /* Agent Loop */
+    .loop-diagram { display: flex; align-items: center; max-width: 760px; }
+    .loop-node { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+    .loop-circle {
+      width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent);
+      background: var(--surface); display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--primary); text-align: center; padding: 0.5rem;
+    }
+    .loop-arrow { color: var(--accent); font-size: 1.4rem; padding: 0 0.2rem; flex-shrink: 0; }
+    .loop-note  { font-size: 0.75rem; color: var(--muted); text-align: center; }
+    .loop-repeat {
+      display: flex; align-items: center; gap: 0.3rem; margin-top: 1.2rem;
+      font-size: 0.78rem; color: var(--muted); letter-spacing: 0.08em;
+    }
+
+    /* Stack */
+    .stack { display: flex; flex-direction: column; gap: 4px; max-width: 520px; width: 100%; }
+    .stack-layer { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.25rem; border-radius: 4px; }
+    .layer-num  { font-size: 0.65rem; color: var(--dim); min-width: 18px; text-align: right; }
+    .layer-name { font-size: 0.88rem; color: var(--primary); flex: 1; }
+    .layer-sub  { font-size: 0.72rem; color: var(--muted); }
+    .sl-0 { background: color-mix(in srgb, var(--accent) 30%, var(--surface)); }
+    .sl-1 { background: color-mix(in srgb, var(--accent) 20%, var(--surface)); }
+    .sl-2 { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+    .sl-3 { background: color-mix(in srgb, var(--accent) 6%,  var(--surface)); }
+    .stack-note { font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 1rem; font-style: italic; }
+
+    /* Compare */
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 720px; width: 100%; }
+    .compare-col { background: var(--surface); border-radius: 6px; padding: 1.25rem 1.5rem; }
+    .compare-col h3 {
+      font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.75rem;
+    }
+    .compare-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .compare-col ul li {
+      font-size: 0.9rem; color: var(--subtext); padding-left: 1rem; position: relative;
+    }
+    .compare-col ul li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+    .compare-col.left  { border-top: 2px solid var(--muted); }
+    .compare-col.right { border-top: 2px solid var(--accent); }
+
+    /* Cards */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; width: 100%; max-width: 720px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--surface2); border-radius: 6px;
+      padding: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .card .card-icon { font-size: 1.4rem; }
+    .card h3 { font-size: 0.85rem; color: var(--primary); font-weight: normal; letter-spacing: 0.05em; }
+    .card p  { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+    /* Roles */
+    .roles { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; max-width: 640px; width: 100%; }
+    .role-box { background: var(--surface); border-radius: 6px; padding: 1.25rem 1.5rem; text-align: center; }
+    .role-box h3 { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+    .role-box ul { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+    .role-box ul li { font-size: 0.85rem; color: var(--subtext); }
+    .role-mid { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--accent); }
+    .role-box.ai    { border-top: 2px solid var(--muted); }
+    .role-box.human { border-top: 2px solid var(--accent); }
+
+    /* Bullets */
+    .bullet-block { display: flex; flex-direction: column; gap: 1.1rem; max-width: 640px; width: 100%; }
+    .b-item { display: flex; gap: 0.9rem; align-items: flex-start; }
+    .b-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 0.45rem; }
+    .b-text { font-size: 0.95rem; color: var(--subtext); line-height: 1.5; }
+    .b-sub  { font-size: 0.78rem; color: var(--dim); margin-top: 0.2rem; }
+
+    /* Warning */
+    .warning-tag {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: color-mix(in srgb, var(--deep) 40%, var(--surface));
+      border: 1px solid var(--deep); border-radius: 4px;
+      padding: 0.4rem 0.9rem; font-size: 0.78rem; color: var(--subtext); margin-top: 1rem;
+    }
+
+    /* Quote */
+    .quote { max-width: 680px; text-align: center; font-size: clamp(1rem, 2.5vw, 1.5rem); color: var(--primary); line-height: 1.7; font-style: italic; }
+    .quote span { color: var(--muted); }
+
+    /* Backgrounds */
+    .slide-title   { background: radial-gradient(ellipse at 60% 40%, #2a1a0a 0%, var(--bg) 70%); }
+    .slide-closing { background: radial-gradient(ellipse at 40% 60%, #1a0d05 0%, var(--bg) 70%); }
+
+    /* Nav */
+    #nav {
+      display: flex; align-items: center; justify-content: center; gap: 1.5rem;
+      padding: 0.75rem 2rem; background: var(--surface); border-top: 1px solid var(--surface2); flex-shrink: 0;
+    }
+    .nav-btn {
+      background: none; border: 1px solid var(--surface2); color: var(--subtext);
+      padding: 0.35rem 1.1rem; font-size: 0.78rem; letter-spacing: 0.1em;
+      cursor: pointer; border-radius: 3px; transition: border-color 0.2s, color 0.2s, background 0.2s;
+      font-family: inherit;
+    }
+    .nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--primary); }
+    .nav-btn:disabled { opacity: 0.25; cursor: default; }
+    #slide-counter { font-size: 0.72rem; letter-spacing: 0.2em; color: var(--dim); min-width: 52px; text-align: center; }
+    #dots { display: flex; gap: 6px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); cursor: pointer; transition: background 0.2s, transform 0.2s; border: none; }
+    .dot.active { background: var(--primary); transform: scale(1.35); }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <div id="deck">
+
+    <!-- 1 · TITLE -->
+    <section class="slide active slide-title" data-index="0">
+      <span class="eyebrow">AI Collective @ ECPI &nbsp;·&nbsp; April 16, 2026 &nbsp;·&nbsp; 6:00 PM</span>
+      <h1>The Age of Agents</h1>
+      <div style="font-size:1rem;color:var(--muted);margin:.4rem 0 0;letter-spacing:.12em;">From Tools to Autonomous Systems</div>
+      <div class="rule"></div>
+      <div class="meta">Dr. [Presenter Name]</div>
+    </section>
+
+    <!-- 2 · FRAMING -->
+    <section class="slide" data-index="1">
+      <span class="eyebrow">Opening</span>
+      <h2>Framing the Discussion</h2>
+      <div class="question-block">
+        <p>How many of you have used generative AI tools — ChatGPT, Copilot, Gemini?</p>
+      </div>
+      <div class="question-block">
+        <p>How many would <em style="color:var(--primary)">trust</em> these systems to complete a task <em style="color:var(--primary)">independently?</em></p>
+      </div>
+      <div class="rule"></div>
+      <p class="framing">We are no longer interacting with static tools —<br>we are interacting with systems that exhibit <em>goal-directed behavior.</em></p>
+    </section>
+
+    <!-- 3 · HISTORY -->
+    <section class="slide" data-index="2">
+      <span class="eyebrow">Context</span>
+      <h2>Evolution of Computing Systems</h2>
+      <div class="timeline">
+        <div class="t-row"><span class="t-from">Deterministic Programs</span><span class="t-arrow">→</span><span class="t-to">Rule-Based Systems</span></div>
+        <div class="t-row"><span class="t-from">Statistical Learning</span><span class="t-arrow">→</span><span class="t-to">Machine Learning Models</span></div>
+        <div class="t-row"><span class="t-from">Generative Models</span><span class="t-arrow">→</span><span class="t-to">Large Language Models</span></div>
+        <div class="t-row"><span class="t-from" style="color:var(--primary)">Emerging Paradigm</span><span class="t-arrow">→</span><span class="t-to" style="font-style:italic">Autonomous Agents</span></div>
+      </div>
+      <p class="key-shift">Key shift: from execution of instructions → to probabilistic reasoning and decision-making</p>
+    </section>
+
+    <!-- 4 · DEFINITION -->
+    <section class="slide" data-index="3">
+      <span class="eyebrow">Definition</span>
+      <h2>What Is an AI Agent?</h2>
+      <div class="def-box">
+        A system capable of <strong style="color:var(--primary)">perceiving</strong> its environment,
+        <strong style="color:var(--primary)">reasoning</strong> about goals,
+        and taking <strong style="color:var(--primary)">actions</strong> to achieve those goals.
+      </div>
+      <div class="pill-list">
+        <span class="pill hi">Perception</span>
+        <span class="pill" style="color:var(--dim)">→</span>
+        <span class="pill hi">Reasoning</span>
+        <span class="pill" style="color:var(--dim)">→</span>
+        <span class="pill hi">Action</span>
+        <span class="pill" style="color:var(--dim)">→</span>
+        <span class="pill hi">Feedback</span>
+      </div>
+      <div class="pill-list" style="margin-top:.8rem">
+        <span class="pill">Input / Context</span>
+        <span class="pill">LLM Inference</span>
+        <span class="pill">Tool Use · API Calls</span>
+        <span class="pill">Iteration Loop</span>
+      </div>
+    </section>
+
+    <!-- 5 · AGENT LOOP -->
+    <section class="slide" data-index="4">
+      <span class="eyebrow">Architecture</span>
+      <h2>The Agent Loop</h2>
+      <div class="loop-diagram">
+        <div class="loop-node"><div class="loop-circle">Goal</div><span class="loop-note">Objective</span></div>
+        <span class="loop-arrow">→</span>
+        <div class="loop-node"><div class="loop-circle">Reason</div><span class="loop-note">LLM Plan</span></div>
+        <span class="loop-arrow">→</span>
+        <div class="loop-node"><div class="loop-circle">Act</div><span class="loop-note">Tool Call</span></div>
+        <span class="loop-arrow">→</span>
+        <div class="loop-node"><div class="loop-circle">Observe</div><span class="loop-note">Result</span></div>
+        <span class="loop-arrow">→</span>
+        <div class="loop-node"><div class="loop-circle" style="border-color:var(--primary)">Update</div><span class="loop-note">Refine</span></div>
+      </div>
+      <div class="loop-repeat"><span style="color:var(--accent)">↺</span>&nbsp;Iterative refinement — behavior emerges from interaction with environment and tools</div>
+    </section>
+
+    <!-- 6 · ARCHITECTURE -->
+    <section class="slide" data-index="5">
+      <span class="eyebrow">System Design</span>
+      <h2>Agent Architecture Stack</h2>
+      <div class="stack">
+        <div class="stack-layer sl-0"><span class="layer-num">4</span><span class="layer-name">Memory Layer</span><span class="layer-sub">Short-term context · Long-term retrieval</span></div>
+        <div class="stack-layer sl-1"><span class="layer-num">3</span><span class="layer-name">Tooling Layer</span><span class="layer-sub">Code execution · APIs · Web retrieval</span></div>
+        <div class="stack-layer sl-2"><span class="layer-num">2</span><span class="layer-name">Prompt / System Instruction Layer</span><span class="layer-sub">Goals · Constraints · Persona</span></div>
+        <div class="stack-layer sl-3"><span class="layer-num">1</span><span class="layer-name">Foundation Model (LLM)</span><span class="layer-sub">GPT-4 · Claude · Llama · Gemini</span></div>
+      </div>
+      <p class="stack-note">Capability is not solely a function of model size — it is a function of <em>system design.</em></p>
+    </section>
+
+    <!-- 7 · CAPABILITIES -->
+    <section class="slide" data-index="6">
+      <span class="eyebrow">Capabilities</span>
+      <h2>What Modern Agents Can Do</h2>
+      <div class="card-grid">
+        <div class="card"><div class="card-icon">⌨️</div><h3>Code Generation</h3><p>Synthesis and refactoring across languages and frameworks.</p></div>
+        <div class="card"><div class="card-icon">🔍</div><h3>Automated Debugging</h3><p>Root-cause identification and patch suggestion.</p></div>
+        <div class="card"><div class="card-icon">🧠</div><h3>NL Reasoning</h3><p>Multi-step inference from unstructured text.</p></div>
+        <div class="card"><div class="card-icon">📊</div><h3>Log Analysis</h3><p>Anomaly detection in structured and semi-structured data.</p></div>
+      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin-top:1.2rem;text-align:center;font-style:italic;">Tasks traditionally requiring human cognition are now partially automatable.</p>
+    </section>
+
+    <!-- 8 · LIMITATIONS -->
+    <section class="slide" data-index="7">
+      <span class="eyebrow">Constraints</span>
+      <h2>Limitations and Known Weaknesses</h2>
+      <div class="bullet-block">
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Hallucination / Fabrication</div><div class="b-sub">Confident generation of incorrect information</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Lack of True Understanding</div><div class="b-sub">Pattern matching, not grounded cognition</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Prompt Sensitivity</div><div class="b-sub">Output quality varies with phrasing</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Inconsistent Long-Term Planning</div><div class="b-sub">Context degradation over extended tasks</div></div></div>
+      </div>
+      <div class="warning-tag">⚠ These systems <em>simulate</em> reasoning — they do not possess grounded cognition.</div>
+    </section>
+
+    <!-- 9 · DEMO SETUP -->
+    <section class="slide" data-index="8">
+      <span class="eyebrow">Demonstration</span>
+      <h2>Evaluation Setup</h2>
+      <div class="compare">
+        <div class="compare-col left">
+          <h3>Criteria</h3>
+          <ul><li>Accuracy</li><li>Clarity of explanation</li><li>Robustness of solution</li></ul>
+        </div>
+        <div class="compare-col right">
+          <h3>Tasks</h3>
+          <ul><li>Debugging a faulty function</li><li>Anomaly identification in login data</li></ul>
+        </div>
+      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin-top:1.5rem;text-align:center;font-style:italic;">Objective: evaluate agent performance on practical, bounded tasks.</p>
+    </section>
+
+    <!-- 10 · DEMO -->
+    <section class="slide" data-index="9">
+      <span class="eyebrow">Live Demo</span>
+      <h2>Example Task — Debugging</h2>
+      <div class="def-box" style="max-width:580px;margin-bottom:1.2rem;">Present faulty function → evaluate agent response</div>
+      <div class="bullet-block" style="max-width:560px;">
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Did the agent correctly identify the issue?</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Was the explanation meaningful?</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Would you trust this output in practice?</div></div></div>
+      </div>
+    </section>
+
+    <!-- 11 · OBSERVATIONS -->
+    <section class="slide" data-index="10">
+      <span class="eyebrow">Observations</span>
+      <h2>Takeaways from the Demo</h2>
+      <div class="bullet-block">
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">High performance on structured, pattern-based tasks</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Strong explanatory capabilities — variable quality</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Occasional subtle errors remain present</div></div></div>
+      </div>
+      <div class="rule"></div>
+      <p class="framing" style="font-size:.92rem;">Agents excel in bounded problem spaces — but require meaningful human oversight.</p>
+    </section>
+
+    <!-- 12 · HUMAN VS AI -->
+    <section class="slide" data-index="11">
+      <span class="eyebrow">Comparative Analysis</span>
+      <h2>Human vs. AI Capabilities</h2>
+      <div class="compare">
+        <div class="compare-col left">
+          <h3>AI Systems</h3>
+          <ul><li>Speed at scale</li><li>Pattern recognition</li><li>Parallelization</li></ul>
+        </div>
+        <div class="compare-col right">
+          <h3>Humans</h3>
+          <ul><li>Contextual understanding</li><li>Ethical reasoning</li><li>Responsibility &amp; accountability</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 · AUGMENTED INTELLIGENCE -->
+    <section class="slide" data-index="12">
+      <span class="eyebrow">Framework</span>
+      <h2>The Augmented Intelligence Model</h2>
+      <div class="roles">
+        <div class="role-box ai">
+          <h3>AI</h3>
+          <ul><li>Generation</li><li>Analysis</li><li>Iteration</li></ul>
+        </div>
+        <div class="role-mid">⇌</div>
+        <div class="role-box human">
+          <h3>Human</h3>
+          <ul><li>Validation</li><li>Direction</li><li>Judgment</li></ul>
+        </div>
+      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin-top:1.4rem;text-align:center;font-style:italic;">Optimal performance emerges from collaboration — not replacement.</p>
+    </section>
+
+    <!-- 14 · AUGMENTED CRAFTSMAN -->
+    <section class="slide" data-index="13">
+      <span class="eyebrow">Professional Identity</span>
+      <h2>The Augmented Craftsman</h2>
+      <p class="framing" style="margin-bottom:1.4rem;font-size:.95rem;">The future practitioner is not <em>replaced</em> by AI — they are <em>enhanced</em> by it.</p>
+      <div class="pill-list">
+        <span class="pill hi">Prompt Engineering</span>
+        <span class="pill hi">Critical Evaluation</span>
+        <span class="pill hi">System-Level Thinking</span>
+        <span class="pill hi">Domain Expertise</span>
+      </div>
+    </section>
+
+    <!-- 15 · IMPLICATIONS -->
+    <section class="slide" data-index="14">
+      <span class="eyebrow">Implications</span>
+      <h2>Software Development &amp; Cybersecurity</h2>
+      <div class="compare">
+        <div class="compare-col left">
+          <h3>Software Development</h3>
+          <ul><li>AI-assisted coding workflows</li><li>Reduced boilerplate</li><li>Increased abstraction</li></ul>
+        </div>
+        <div class="compare-col right">
+          <h3>Cybersecurity</h3>
+          <ul><li>Automated anomaly detection</li><li>AI-assisted incident response</li></ul>
+        </div>
+      </div>
+      <div class="warning-tag">⚠ Risk: over-reliance without verification</div>
+    </section>
+
+    <!-- 16 · AI COLLECTIVE -->
+    <section class="slide" data-index="15">
+      <span class="eyebrow">About Us</span>
+      <h2>Why the AI Collective Exists</h2>
+      <div class="card-grid" style="max-width:620px;">
+        <div class="card"><div class="card-icon">🔬</div><h3>Explore Critically</h3><p>Evaluate AI tools with rigor and intellectual honesty.</p></div>
+        <div class="card"><div class="card-icon">🔗</div><h3>Bridge Theory &amp; Practice</h3><p>Translate academic concepts into applied skills.</p></div>
+        <div class="card"><div class="card-icon">🛡️</div><h3>Focus Areas</h3><p>Development · Cybersecurity · Applied AI Systems</p></div>
+      </div>
+    </section>
+
+    <!-- 17 · CALL TO ACTION -->
+    <section class="slide" data-index="16">
+      <span class="eyebrow">What's Next</span>
+      <h2>Future Sessions</h2>
+      <div class="bullet-block" style="margin-bottom:1.5rem;">
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Hands-on agent development</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Tool comparisons and benchmarks</div></div></div>
+        <div class="b-item"><div class="b-dot"></div><div><div class="b-text">Real-world case studies</div></div></div>
+      </div>
+      <div class="def-box" style="font-size:1rem;color:var(--primary);">What problems should we explore next?</div>
+    </section>
+
+    <!-- 18 · CLOSING -->
+    <section class="slide slide-closing" data-index="17">
+      <span class="eyebrow">Closing Thought</span>
+      <div class="rule"></div>
+      <p class="quote">
+        We have spent decades teaching machines<br>
+        <span>to follow instructions.</span><br><br>
+        We are now teaching them<br>
+        to <em>decide what to do next.</em>
+      </p>
+      <div class="rule" style="margin-top:2rem;"></div>
+      <div class="meta">AI Collective @ ECPI &nbsp;·&nbsp; April 16, 2026</div>
+    </section>
+
+  </div>
+
+  <nav id="nav">
+    <button class="nav-btn" id="btn-prev" disabled>← Prev</button>
+    <div id="dots"></div>
+    <span id="slide-counter">1 / 18</span>
+    <button class="nav-btn" id="btn-next">Next →</button>
+  </nav>
+
+  <script>
+    const slides   = Array.from(document.querySelectorAll('.slide'));
+    const btnPrev  = document.getElementById('btn-prev');
+    const btnNext  = document.getElementById('btn-next');
+    const counter  = document.getElementById('slide-counter');
+    const dotsEl   = document.getElementById('dots');
+    const progress = document.getElementById('progress-bar');
+    let current = 0;
+
+    slides.forEach((_, i) => {
+      const d = document.createElement('button');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.setAttribute('aria-label', `Slide ${i + 1}`);
+      d.addEventListener('click', () => goTo(i));
+      dotsEl.appendChild(d);
+    });
+
+    function updateUI() {
+      counter.textContent = `${current + 1} / ${slides.length}`;
+      btnPrev.disabled = current === 0;
+      btnNext.disabled = current === slides.length - 1;
+      progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+      document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    function goTo(index) {
+      if (index === current || index < 0 || index >= slides.length) return;
+      const prev = slides[current];
+      prev.classList.remove('active');
+      prev.classList.add('exit');
+      setTimeout(() => prev.classList.remove('exit'), 450);
+      current = index;
+      slides[current].classList.add('active');
+      updateUI();
+    }
+
+    btnPrev.addEventListener('click', () => goTo(current - 1));
+    btnNext.addEventListener('click', () => goTo(current + 1));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(current - 1);
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>
