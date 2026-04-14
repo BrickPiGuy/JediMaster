@@ -46,6 +46,7 @@
       transform: translateX(50px);
       transition: opacity 0.4s ease, transform 0.4s ease;
       pointer-events: none;
+      overflow-y: auto;
     }
     .slide.active  { opacity: 1; transform: translateX(0); pointer-events: auto; }
     .slide.exit    { opacity: 0; transform: translateX(-50px); }
@@ -105,7 +106,7 @@
     .pill.hi { border-color: var(--accent); color: var(--primary); }
 
     /* Agent Loop */
-    .loop-diagram { display: flex; align-items: center; max-width: 760px; }
+    .loop-diagram { display: flex; align-items: center; justify-content: center; max-width: 760px; flex-wrap: wrap; gap: 0.35rem; }
     .loop-node { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
     .loop-circle {
       width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent);
@@ -126,10 +127,10 @@
     .layer-num  { font-size: 0.65rem; color: var(--dim); min-width: 18px; text-align: right; }
     .layer-name { font-size: 0.88rem; color: var(--primary); flex: 1; }
     .layer-sub  { font-size: 0.72rem; color: var(--muted); }
-    .sl-0 { background: color-mix(in srgb, var(--accent) 30%, var(--surface)); }
-    .sl-1 { background: color-mix(in srgb, var(--accent) 20%, var(--surface)); }
-    .sl-2 { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
-    .sl-3 { background: color-mix(in srgb, var(--accent) 6%,  var(--surface)); }
+    .sl-0 { background: #4a3228; }
+    .sl-1 { background: #43312d; }
+    .sl-2 { background: #3c2f30; }
+    .sl-3 { background: #342c31; }
     .stack-note { font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 1rem; font-style: italic; }
 
     /* Compare */
@@ -179,7 +180,7 @@
     /* Warning */
     .warning-tag {
       display: inline-flex; align-items: center; gap: 0.4rem;
-      background: color-mix(in srgb, var(--deep) 40%, var(--surface));
+      background: #3b231e;
       border: 1px solid var(--deep); border-radius: 4px;
       padding: 0.4rem 0.9rem; font-size: 0.78rem; color: var(--subtext); margin-top: 1rem;
     }
@@ -209,6 +210,30 @@
     #dots { display: flex; gap: 6px; }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); cursor: pointer; transition: background 0.2s, transform 0.2s; border: none; }
     .dot.active { background: var(--primary); transform: scale(1.35); }
+
+    @media (max-width: 900px) {
+      .slide { padding: 2.25rem 1.5rem; justify-content: flex-start; }
+      .compare { grid-template-columns: 1fr; gap: 1rem; }
+      .roles { grid-template-columns: 1fr; gap: 0.75rem; }
+      .role-mid { transform: rotate(90deg); }
+      .loop-circle { width: 68px; height: 68px; font-size: 0.6rem; }
+      .loop-arrow { font-size: 1rem; }
+      #nav { gap: 0.75rem; padding: 0.6rem 0.75rem; }
+      #slide-counter { min-width: 46px; }
+    }
+
+    @media (max-width: 560px) {
+      .slide h1 { font-size: clamp(1.7rem, 8vw, 2.4rem); }
+      .slide h2 { font-size: clamp(1.05rem, 5.5vw, 1.45rem); }
+      .eyebrow { letter-spacing: 0.18em; font-size: 0.62rem; text-align: center; }
+      .card-grid { grid-template-columns: 1fr; }
+      .question-block, .def-box, .bullet-block, .timeline { max-width: 100%; }
+      .loop-diagram { row-gap: 0.6rem; }
+      .loop-arrow { display: none; }
+      .loop-repeat { text-align: center; justify-content: center; }
+      #dots { display: none; }
+      .nav-btn { padding: 0.35rem 0.8rem; }
+    }
   </style>
 </head>
 <body>
