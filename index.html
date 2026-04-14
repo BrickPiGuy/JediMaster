@@ -199,7 +199,43 @@
     .quote span { color: var(--muted); }
 
     /* Backgrounds */
-    .slide-title   { background: radial-gradient(ellipse at 60% 40%, #2a1a0a 0%, var(--bg) 70%); }
+    .slide-title {
+      background-image:
+        radial-gradient(ellipse at center, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.42) 100%),
+        linear-gradient(to bottom, rgba(7, 6, 8, 0.38) 0%, rgba(12, 9, 10, 0.66) 46%, rgba(24, 23, 28, 0.92) 100%),
+        url('Jedi.png');
+      background-size: cover;
+      background-position: center 14%;
+      background-repeat: no-repeat;
+    }
+    .slide-title h1,
+    .slide-title .eyebrow,
+    .slide-title .meta,
+    .slide-title .rule,
+    .slide-title div {
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+    .slide-title .title-sub {
+      font-size: 1rem;
+      color: var(--primary);
+      margin: 0.5rem 0 0;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.75rem;
+      border: 1px solid rgba(207, 181, 148, 0.45);
+      border-radius: 999px;
+      background: rgba(24, 23, 28, 0.42);
+      backdrop-filter: blur(1.5px);
+    }
+    .slide-title .title-role {
+      margin-top: 0.45rem;
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--subtext);
+      opacity: 0.95;
+      text-align: center;
+    }
     .slide-closing { background: radial-gradient(ellipse at 40% 60%, #1a0d05 0%, var(--bg) 70%); }
 
     /* Nav */
@@ -222,6 +258,7 @@
 
     @media (max-width: 900px) {
       .slide { padding: 2.25rem 1.5rem; justify-content: flex-start; }
+      .slide-title { background-position: center 22%; }
       .compare { grid-template-columns: 1fr; gap: 1rem; }
       .roles { grid-template-columns: 1fr; gap: 0.75rem; }
       .role-mid { transform: rotate(90deg); }
@@ -235,6 +272,22 @@
       .slide h1 { font-size: clamp(1.7rem, 8vw, 2.4rem); }
       .slide h2 { font-size: clamp(1.05rem, 5.5vw, 1.45rem); }
       .eyebrow { letter-spacing: 0.18em; font-size: 0.62rem; text-align: center; }
+      .slide-title .title-sub {
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        padding: 0.3rem 0.55rem;
+      }
+      .slide-title .title-role {
+        font-size: 0.64rem;
+        letter-spacing: 0.12em;
+      }
+      .slide-title {
+        background-image:
+          radial-gradient(ellipse at center, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.5) 100%),
+          linear-gradient(to bottom, rgba(7, 6, 8, 0.48) 0%, rgba(12, 9, 10, 0.74) 46%, rgba(24, 23, 28, 0.95) 100%),
+          url('Jedi.png');
+        background-position: center 28%;
+      }
       .card-grid { grid-template-columns: 1fr; }
       .question-block, .def-box, .bullet-block, .timeline { max-width: 100%; }
       .loop-diagram { row-gap: 0.6rem; }
@@ -255,9 +308,10 @@
     <section class="slide active slide-title" data-index="0">
       <span class="eyebrow">AI Collective @ ECPI &nbsp;·&nbsp; April 16, 2026 &nbsp;·&nbsp; 6:00 PM</span>
       <h1>The Age of Agents</h1>
-      <div style="font-size:1rem;color:var(--muted);margin:.4rem 0 0;letter-spacing:.12em;">From Tools to Autonomous Systems</div>
+      <div class="title-sub">From Tools to Autonomous Systems</div>
       <div class="rule"></div>
       <div class="meta">Dr. Joe Dwyer</div>
+      <div class="title-role">Founding Jedi, AI Collective RVA Chapter</div>
     </section>
 
     <!-- 2 · FRAMING -->
